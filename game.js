@@ -5,7 +5,7 @@ function start_game() {
             e.preventDefault();
         }
         if (game.dead == -1 && game.lives > 0) {
-            if (e.keyCode == 38){ 
+            if (e.keyCode == 38){
                 up();
             } else if (e.keyCode == 40){
                 down();
@@ -13,7 +13,7 @@ function start_game() {
                 left();
             } else if (e.keyCode == 39){
                 right();
-            } 
+            }
         }
     });
     board = document.getElementById("game");
@@ -21,13 +21,14 @@ function start_game() {
     theme = document.createElement('audio');
     theme.setAttribute('src', 'assets/frogger.mp3');
     theme.setAttribute('loop', 'true');
-    theme.play();
+   // theme.play();
     sprites = new Image();
     deadsprite = new Image();
-    sprites.src = "assets/frogger_sprites.png"; 
+    sprites.src = "assets/frogger_sprites.png";
     deadsprite.src = "assets/dead_frog.png";
     sprites.onload = function() {
         draw_bg();
+        draw_abs();
         draw_info();
         make_cars();
         make_logs();
@@ -40,9 +41,10 @@ function game_loop() {
     draw_bg();
     draw_info();
     draw_cars();
-    draw_logs();
+    draw_abs();
+   // draw_logs();
     draw_wins()
-    if (game.lives > 0) { 
+    if (game.lives > 0) {
         draw_frog();
     } else {
         game_over();
@@ -51,25 +53,51 @@ function game_loop() {
 
 // drawing functions: bg, info, frogger, cars, logs, wins
 
+
+function draw_abs()  {
+
+       context.drawImage(sprites, 8, 265, 30, 22, 300, 500, 30, 22); //purple car = abalone
+
+}
+
+
+function make_abalone() {
+    var abalones = []
+    for (var i = 0; i <4; i++){ //tie to Game.level
+        var randomX = Math.floor(Math.random() * 399) + 1;
+        var randomY = Math.floor(Math.random() * 100) + 495;
+        var tempAb = new Abalone(randomX, randomY);
+        abalones.push(tempAb);
+    }
+
+}
+
 function draw_bg()  {
     context.fillStyle="#191970";
-    context.fillRect(0,0,399,284);
-    context.fillStyle="#000000";
+    context.fillRect(0,0,399,284)
+    context.fillStyle="#9dd0e0";
+    context.fillRect(0,0,399,150);
+    //context.fillStyle="#000000";
+    context.fillStyle="#191970";
     context.fillRect(0,284,399,283);
-    context.drawImage(sprites, 0, 0, 399, 113, 0, 0, 399, 113);
-    context.drawImage(sprites, 0, 119, 399, 34, 0, 283, 399, 34);
-    context.drawImage(sprites, 0, 119, 399, 34, 0, 495, 399, 34);
+ //   context.drawImage(sprites, 0, 0, 399, 113, 0, 0, 399, 113); //Frogger logo
+ //   context.drawImage(sprites, 0, 119, 399, 34, 0, 283, 399, 34); //Middle purple bar
+    context.drawImage(sprites, 0, 119, 399, 34, 0, 495, 399, 34);  //this is where the abs live
 }
 
 function draw_info() {
     draw_lives();
+    context.font = "bold 20pt arial";
+    context.fillStyle = "#000000";
+    context.fillText("Ab Diver", 160, 20);
     context.font = "bold 14pt arial";
     context.fillStyle = "#00EE00";
     context.fillText("Level ", 74, 545);
     draw_level();
     context.font = "bold 10pt arial";
     context.fillText("Score: ", 4, 560);
-    context.fillText("Highscore: ", 200, 560);
+    context.fillText("Highscore: ", 150, 560);
+    context.fillText("Collected Abs: ", 270, 560);
     draw_score();
 }
 
@@ -79,7 +107,7 @@ function draw_lives() {
     if ((game.score - (game.extra * 10000)) >= 10000 && game.lives < 4) {
         game.extra++;
     }
-    for (var i = 0; i<(game.lives + game.extra); i++){ 
+    for (var i = 0; i<(game.lives + game.extra); i++){
         context.drawImage(sprites, 13, 334, 17, 23, x, y, 11, 15);
         x += 14;
     }
@@ -95,10 +123,11 @@ function draw_score () {
     context.font = "bold 10pt arial";
     context.fillStyle = "#00EE00";
     context.fillText(game.score, 49, 560);
+    context.fillText(game.collectedAbs, 380, 560);
     if (window.localStorage['highscore']) {
         highscore = localStorage['highscore'];
     } else highscore = 0;
-    context.fillText(highscore, 272, 560);
+    context.fillText(highscore, 220, 560);
 }
 
 function draw_frog() {
@@ -120,9 +149,9 @@ function draw_frog() {
     else if (car_collision()) {
         sploosh();
     }
-    else if (water_collision() && game.log == -1) {
-        sploosh();
-    }
+    // else if (ab_collision()) {
+    //     game.collectedAbs++;
+    // }
     else if (check_win()){
         win();
     }
@@ -166,7 +195,7 @@ function draw_wins() {
                     break;
                 case 4:
                     context.drawImage(sprites, 80, 369, 23, 17, 354, 80, 23, 17);
-                    break;                    
+                    break;
             }
         }
     }
@@ -244,7 +273,7 @@ function bounds_check(x, y) {
     if (y > 90 && y < 510 && x > 0 && x < 369) {
         return true;
     }
-    else if (y > 60 && y < 100 && ((x > 5 && x < 40 && !game.won[0]) || 
+    else if (y > 60 && y < 100 && ((x > 5 && x < 40 && !game.won[0]) ||
                 (x > 92 && x < 128 && !game.won[1]) || (x > 178 && x < 214 && !game.won[2]) ||
                 (x > 263 && x < 299 && !game.won[3]) || (x > 347 && x < 383 && !game.won[4]))) {
         return true;
@@ -279,7 +308,7 @@ function win() {
     game.win = 15;
     if(game.won[0] && game.won[1] && game.won[2] && game.won[3] && game.won[4]){
         level();
-    }    
+    }
 }
 
 function level() {
@@ -307,6 +336,18 @@ function car_collision() {
     }
     return false;
 }
+
+function ab_collision() {
+    if (game.posY < 565 && game.posY > 270) {
+        for (var i=0; i<abalones.length; i++) {
+            if (collides(game.posX, game.posY, game.width, game.height, abalones[i].posX, abalones[i].posY, abalones[i].width, abalones[i].height))
+
+                return true;
+        }
+    }
+    return false;
+}
+
 
 function log_collision() {
     if (game.posY < 270) {
@@ -413,18 +454,18 @@ function Car(x, y, lane, speed, model) {
             case 0:
                 context.drawImage(sprites, 8, 265, 30, 22, this.posX, this.posY, 30, 22);
                 break;
-            case 1: 
+            case 1:
                 context.drawImage(sprites, 45, 264, 29, 24, this.posX, this.posY, 29, 24);
                 break;
-            case 2: 
+            case 2:
                 context.drawImage(sprites, 81, 263, 24, 26, this.posX, this.posY, 24, 26);
                 break;
-            case 3: 
+            case 3:
                 context.drawImage(sprites, 9, 300, 24, 21, this.posX, this.posY, 24, 21);
                 break;
-            case 4: 
+            case 4:
                 context.drawImage(sprites, 105, 301, 46, 19, this.posX, this.posY, 46, 19);
-                break;         
+                break;
         }
     }
     this.out_of_bounds = function() {
@@ -466,6 +507,31 @@ function Log (x, y, row, speed, dir, length) {
     }
 }
 
+
+function Abalone(x, y, size) {
+    this.posX = x;
+    this.posY = y;
+    this.width = 30;
+    this.height = 22;
+    this.size = size;
+    // this.move = function() {
+    //     this.posX = this.posX - (models[model].dir * this.speed * game.level);
+    // }
+    this.draw = function() {
+        context.drawImage(sprites, 8, 265, 30, 22, 300, 500, 30, 22);
+
+        }
+    this.collected = function(){
+
+
+    }
+    this.out_of_bounds = function() {
+        return ((this.posX + this.width) < 0 || this.posX > 399);
+    }
+}
+
+
+
 // y-coords of rows starting with first traffic row
 var rows = [473, 443, 413, 383, 353, 323, 288, 261, 233, 203, 173, 143, 113];
 
@@ -473,9 +539,10 @@ function Game() {
     this.lives = 5;
     this.extra = 0;
     this.level = 1;
-    this.score = 0;   
-    this.posX = 187;
-    this.posY = 503;
+    this.score = 0;
+    this.collectedAbs = 0;
+    this.posX = 187;  //187
+    this.posY = 145;    //503
     this.facing = 'u';
     this.log = -1;
     this.current = -1;
